@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RiseInk Tattoo - V22 FULL + Artist Login</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box;font-family:system-ui,Arial}body{margin:0;background:#0f0f0f;color:#fff}
+header{background:#000;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:20;border-bottom:2px solid #d4af37}
+.logo{font-weight:900}.logo span{color:#d4af37}.sync{font-size:11px;padding:5px 10px;border-radius:20px;background:#222}.sync.on{background:#1a7f37}
+nav{display:flex;gap:7px;overflow-x:auto;padding:10px;background:#171717;position:sticky;top:51px;z-index:19}nav button{white-space:nowrap;border:1px solid #333;background:#222;color:#fff;padding:9px 13px;border-radius:20px;cursor:pointer;font-size:13px}nav button.active{background:#d4af37;color:#000;font-weight:700}
+main{padding:13px;max-width:950px;margin:auto}.card{background:#1c1c1c;border:1px solid #2a2a2a;border-radius:14px;padding:14px;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.stat{background:#222;border-radius:12px;padding:13px}.stat b{font-size:20px;display:block}.stat small{color:#aaa}
+input,select,textarea{width:100%;padding:11px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;margin:6px 0}button.btn{background:#d4af37;color:#000;border:0;padding:11px;border-radius:10px;font-weight:800;width:100%;cursor:pointer}button.btn2{background:#222;color:#fff;border:1px solid #444;padding:8px 10px;border-radius:8px;cursor:pointer}
+.badge{padding:3px 8px;border-radius:20px;font-size:11px;background:#333}.badge.selesai{background:#1a7f37}.badge.batal{background:#b42318}.badge.dp{background:#b7791f}
+#login{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;overflow:auto}.login-box{width:100%;max-width:380px;background:#111;border:1px solid #333;border-radius:16px;padding:20px;text-align:center}
+.del{background:#b42318;color:#fff;border:0;padding:6px 10px;border-radius:8px;cursor:pointer}.small{font-size:12px;color:#aaa}.item{padding:10px 0;border-bottom:1px solid #2a2a2a}.flex{display:flex;gap:8px}.flex>*{flex:1}
+.bar{height:10px;background:#333;border-radius:10px;overflow:hidden}.bar i{display:block;height:100%;background:#d4af37}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.cal-head{font-size:11px;text-align:center;color:#aaa;padding:6px}
+.day{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;min-height:95px;padding:6px;cursor:pointer;overflow:hidden}.day:hover{border-color:#d4af37}.day.today{border:2px solid #d4af37}.day.mine{border:2px solid #1a7f37;background:#14271a}.day .num{font-weight:800;font-size:14px}.day .artist{font-size:11px;margin-top:4px;background:#d4af37;color:#000;padding:3px 5px;border-radius:6px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.day img{width:100%;height:48px;object-fit:cover;border-radius:6px;margin-top:4px}.day .job{font-size:10px;color:#ccc;margin-top:3px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}.modal-box{width:100%;max-width:500px;background:#1c1c1c;border:1px solid #333;border-radius:14px;padding:16px;max-height:90vh;overflow:auto}.modal-box img{width:100%;border-radius:10px}
+@media(max-width:600px){.day{min-height:76px}.day img{height:32px}.day .job{display:none}.grid3{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="login"><div class="login-box"><div style="font-size:30px">💉</div><h2>RISE<span style="color:#d4af37">INK</span> TATTOO</h2><p>V22 FULL + Artist Login<br>Sanggau, Kalimantan Barat</p>
+<select id="role" onchange="onRoleChange()"><option value="owner">👑 Owner</option><option value="admin">🛠️ Admin</option><option value="manager">📊 Manager</option><option value="artist">🧑‍🎨 Artist</option></select>
+<!-- DROPDOWN ARTIST - MUNCUL KALAU PILIH ARTIST -->
+<div id="artistLoginBox" style="display:none"><select id="artistLoginSelect"><option value="">-- Pilih Nama Artist Kamu --</option></select><p class="small">Artist baru? Login Owner dulu, daftarkan di menu Artist.</p></div>
+<input id="pin" type="password" placeholder="Password"><button class="btn" onclick="doLogin()">MASUK</button>
+<p class="small">owner123 / admin123 / manager123 / artist123<br><span id="loginMsg" style="color:#ff6b6b"></span><br><span id="debug" style="color:#aaa"></span></p></div></div>
+
+<header><div class="logo">RISE<span>INK</span> TATTOO <small style="color:#aaa">• V22 FULL + ARTIST</small></div><div><span id="syncStatus" class="sync">● Menghubungkan...</span> <span id="userLabel"></span> <button onclick="logout()" style="background:#222;color:#fff;border:1px solid #333;padding:5px 10px;border-radius:20px">Keluar</button></div></header>
+<nav>
+<button class="active" data-page="dashboard" onclick="show('dashboard',this)">📊 Dashboard</button>
+<button data-page="booking" onclick="show('booking',this)">📅 Booking</button>
+<button data-page="kalender" onclick="show('kalender',this)">🗓️ Kalender</button>
+<button data-page="klien" onclick="show('klien',this)">👥 Klien</button>
+<button data-page="keuangan" class="menu-uang" onclick="show('keuangan',this)">💰 Keuangan</button>
+<button data-page="stok" onclick="show('stok',this)">🎨 Stok</button>
+<button data-page="artist" onclick="show('artist',this)">🧑‍🎨 Artist</button>
+<button data-page="laporan" class="menu-uang" onclick="show('laporan',this)">📈 Laporan</button>
+<button data-page="pengaturan" onclick="show('pengaturan',this)">⚙️ Pengaturan</button>
+</nav>
+
+<main>
+<div id="page-dashboard">
+<div class="grid3"><div class="stat"><small>Booking Total</small><b id="statBooking">0</b></div><div class="stat uang"><small>Omzet Total</small><b id="statOmzet">Rp 0</b></div><div class="stat uang"><small>Saldo Kas</small><b id="statSaldo">Rp 0</b></div></div>
+<div class="grid3"><div class="stat uang"><small>Hari Ini</small><b id="statHariIni">Rp 0</b></div><div class="stat uang"><small>Bulan Ini</small><b id="statBulan">Rp 0</b></div><div class="stat"><small>Total Klien</small><b id="statKlien">0</b></div></div>
+<div class="card uang"><h3>💰 Profit Bulan Ini</h3><p>Omzet - Pengeluaran = <b id="statProfit">Rp 0</b></p><div class="bar"><i id="barProfit" style="width:50%"></i></div></div>
+<div class="card"><h3>📅 Jadwal Hari Ini</h3><div id="listToday"></div></div>
+<div class="card"><h3>⚠️ Stok Menipis / Habis</h3><div id="listStokAlert"></div></div>
+<div class="card uang"><h3>💰 Transaksi Terakhir</h3><div id="listTransaksi"></div></div>
+<div class="card"><h3>🏆 Artist Terlaris Bulan Ini</h3><div id="listTopArtist"></div></div>
+</div>
+
+<div id="page-booking" style="display:none">
+<div class="card"><h3>➕ Booking Baru - Lengkap</h3>
+<input id="bNama" placeholder="Nama Klien"><div class="flex"><input id="bWa" placeholder="WA 08..."><input id="bUmur" type="number" placeholder="Umur"></div>
+<select id="bLayanan"><option value="Tattoo Kecil|300000">Tattoo Kecil - Rp 300.000</option><option value="Tattoo Sedang|750000">Tattoo Sedang - Rp 750.000</option><option value="Tattoo Besar|1500000">Tattoo Besar - Rp 1.500.000</option><option value="Tattoo Full Sleeve|3500000">Full Sleeve - Rp 3.500.000</option><option value="Cover Up|1200000">Cover Up - Rp 1.200.000</option><option value="Touch Up|150000">Touch Up - Rp 150.000</option><option value="Piercing|200000">Piercing - Rp 200.000</option><option value="Custom|0">Custom - Isi Manual</option></select>
+<div class="flex"><input id="bTanggal" type="date"><input id="bJam" type="time" value="13:00"></div>
+<select id="bArtist"><option value="">-- Pilih Artist --</option></select>
+<input id="bPosisi" placeholder="Posisi Tattoo - Lengan Kanan, Punggung"><input id="bUkuran" placeholder="Ukuran - 10x15 cm">
+<div class="flex"><input id="bHarga" type="number" placeholder="Harga Total Rp"><input id="bDP" type="number" placeholder="DP Masuk Rp"></div>
+<p class="small uang">Sisa Bayar: <b id="sisaLabel">Rp 0</b></p>
+<select id="bStatus"><option>Booking</option><option>DP Masuk</option><option>Proses</option><option>Selesai</option><option>Batal</option></select>
+<select id="bBayar"><option>Cash</option><option>Transfer BRI</option><option>Transfer BCA</option><option>QRIS</option></select>
+<textarea id="bCatatan" placeholder="Deskripsi desain, alergi"></textarea>
+<button class="btn" onclick="addBooking()">SIMPAN & SINKRON KE SEMUA HP</button></div>
+<div class="card"><h3>📋 Semua Booking</h3><div class="flex"><input id="searchBooking" placeholder="Cari nama / artist..." oninput="render()"><select id="filterStatus" onchange="render()"><option value="">Semua Status</option><option>Booking</option><option>DP Masuk</option><option>Proses</option><option>Selesai</option><option>Batal</option></select></div><div id="listBooking"></div></div>
+</div>
+
+<div id="page-kalender" style="display:none">
+<div class="card"><div class="flex" style="align-items:center"><button class="btn2" onclick="geserBulan(-1)">◀ Lalu</button><h3 id="judulBulan" style="text-align:center;margin:0">November 2026</h3><button class="btn2" onclick="geserBulan(1)">Depan ▶</button></div><p class="small" id="infoBulan" style="text-align:center"></p><div class="flex"><button class="btn2" onclick="keBulanIni()">📍 Bulan Ini</button><button class="btn2" onclick="keBulanDepan()">⏭️ Bulan Depan</button></div></div>
+<div class="card"><div class="cal"><div class="cal-head">SEN</div><div class="cal-head">SEL</div><div class="cal-head">RAB</div><div class="cal-head">KAM</div><div class="cal-head">JUM</div><div class="cal-head">SAB</div><div class="cal-head">MIN</div></div><div class="cal" id="kalenderGrid"></div><p class="small">🟢 Hijau = Jadwal Kamu &nbsp; Klik tanggal untuk lihat / upload foto</p></div>
+<div class="card"><h3>📋 Rekap Bulan Ini</h3><div id="rekapBulan"></div></div>
+</div>
+
+<div id="page-klien" style="display:none">
+<div class="card"><h3>➕ Tambah Klien</h3><input id="kNama" placeholder="Nama Lengkap"><input id="kWa" placeholder="WA"><input id="kAlamat" placeholder="Alamat - Sanggau"><input id="kTglLahir" type="date"><textarea id="kCatatan" placeholder="Alergi, riwayat"></textarea><button class="btn" onclick="addKlien()">SIMPAN KLIEN</button></div>
+<div class="card"><h3>👥 Daftar Klien + Riwayat</h3><input id="searchKlien" placeholder="Cari klien..." oninput="render()"><div id="listKlien"></div></div>
+</div>
+
+<div id="page-keuangan" style="display:none">
+<div class="card"><h3>➕ Input Keuangan</h3><select id="fJenis"><option value="masuk">🟢 Pemasukan</option><option value="keluar">🔴 Pengeluaran</option></select><select id="fKategori"><option>Gaji Artist</option><option>Bayar Tattoo</option><option>Beli Tinta / Jarum</option><option>Sewa / Listrik</option><option>Promosi</option><option>Lainnya</option></select><input id="fKet" placeholder="Keterangan"><input id="fNominal" type="number" placeholder="Nominal Rp"><input id="fTanggal" type="date"><button class="btn" onclick="addKeuangan()">SIMPAN KEUANGAN</button></div>
+<div class="card"><h3>💰 Ringkasan</h3><p>Total Masuk: <b id="totalMasuk">Rp 0</b> | Total Keluar: <b id="totalKeluar">Rp 0</b> | Saldo: <b id="saldoLabel">Rp 0</b></p><div class="bar"><i id="barKeuangan" style="width:50%"></i></div></div>
+<div class="card"><h3>📜 Riwayat Keuangan</h3><div id="listKeuangan"></div></div>
+</div>
+
+<div id="page-stok" style="display:none">
+<div class="card"><h3>➕ Tambah / Update Stok</h3><input id="sNama" placeholder="Nama - Tinta Hitam, Jarum 5RL"><select id="sKategori"><option>Tinta</option><option>Jarum</option><option>Mesin</option><option>Perawatan</option><option>Lainnya</option></select><div class="flex"><input id="sJumlah" type="number" placeholder="Jumlah"><input id="sMin" type="number" placeholder="Min Alert - 5"></div><input id="sHarga" class="uang" type="number" placeholder="Harga Beli Rp - Owner Saja"><button class="btn" onclick="addStok()">SIMPAN STOK</button></div>
+<div class="card"><h3>🎨 Daftar Stok</h3><div id="listStok"></div></div>
+</div>
+
+<div id="page-artist" style="display:none">
+<div class="card" id="formArtist"><h3>➕ Tambah Artist</h3><input id="aNama" placeholder="Nama Artist"><input id="aSkill" placeholder="Skill - Realism, Lettering"><input id="aWa" placeholder="WA Artist - 0812xxxx"><input id="aAlamat" placeholder="Alamat"><input id="aKomisi" class="uang" type="number" placeholder="Komisi % - Owner Saja"><button class="btn" onclick="addArtist()">SIMPAN ARTIST</button><p class="small">Setelah disimpan, nama ini langsung muncul di Login Artist.</p></div>
+<div class="card"><h3>🧑‍🎨 Daftar Artist + Job</h3><div id="listArtist"></div></div>
+</div>
+
+<div id="page-laporan" style="display:none">
+<div class="card"><h3>📈 Laporan</h3><div id="laporanIsi"></div><div class="flex"><button class="btn2" onclick="exportWA()">📤 Kirim ke WA</button><button class="btn2" onclick="exportCSV()">⬇️ Download CSV</button></div></div>
+<div class="card"><h3>📅 Booking Per Bulan</h3><div id="laporanBulan"></div></div>
+</div>
+
+<div id="page-pengaturan" style="display:none">
+<div class="card"><h3>⚙️ Pengaturan Toko</h3><input id="setNama" value="RiseInk Tattoo"><input id="setAlamat" value="Sanggau, Kalimantan Barat"><input id="setWa" value="08..."><button class="btn" onclick="saveToko()">SIMPAN TOKO</button></div>
+<div class="card"><h3>🔐 Password Login</h3><label>Owner</label><input id="pwOwner"><label>Admin</label><input id="pwAdmin"><label>Manager</label><input id="pwManager"><label>Artist (Semua Artist)</label><input id="pwArtist"><button class="btn" onclick="savePw()">SIMPAN PASSWORD - Berlaku Semua HP</button></div>
+<div class="card"><h3>💾 Backup / Reset</h3><p class="small">DB: riseink-tattoo • Path: riseink/v22</p><button class="btn2" onclick="backup()">📥 Lihat Backup</button> <button class="btn" style="background:#b42318;color:#fff" onclick="resetAll()">HAPUS SEMUA DATA</button><textarea id="backupArea" style="display:none"></textarea></div>
+</div>
+</main>
+
+<div class="modal" id="modalTanggal"><div class="modal-box"><h3 id="modalJudul">Tanggal</h3><div id="modalIsi"></div>
+<div id="formJadwalAdmin" style="display:none"><hr><h4>📝 Atur Jadwal (Admin / Owner / Manager)</h4><select id="pilihArtist"></select><input id="jadwalJob" placeholder="Kerjaan - Tattoo Lengan"><input id="jadwalJam" placeholder="Jam - 13:00 - 18:00"><input id="jadwalCatatan" placeholder="Catatan"><button class="btn" onclick="simpanJadwal()">SIMPAN JADWAL</button><button class="btn2" style="width:100%;margin-top:8px;background:#b42318;color:#fff;border:0" onclick="hapusJadwal()">HAPUS JADWAL</button></div>
+<div id="formUploadArtist" style="display:none"><hr><h4>📸 Upload Hasil Kerjaan Kamu</h4><input id="uploadJob" placeholder="Hasil - Tattoo Naga 15cm"><input type="file" id="uploadFoto" accept="image/*"><img id="previewFoto" style="display:none;margin-top:8px"><textarea id="uploadCatatan" placeholder="Catatan - Tinta Dynamic, 3 jam"></textarea><button class="btn" onclick="simpanHasil()">SIMPAN HASIL</button></div>
+<button class="btn2" style="width:100%;margin-top:10px" onclick="tutupModal()">TUTUP</button></div></div>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyALjC6h3ec06yaIHCjjUh5BVFmjiuofbas",authDomain:"riseink-tattoo.firebaseapp.com",databaseURL:"https://riseink-tattoo-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"riseink-tattoo",storageBucket:"riseink-tattoo.firebasestorage.app",messagingSenderId:"421724980809",appId:"1:421724980809:web:cca584dfcca884a8b32198",measurementId:"G-8V30B9F46C"};
+firebase.initializeApp(firebaseConfig); const db=firebase.database(); const rootRef=db.ref('riseink/v22');
+function toArray(v){if(!v) return[]; if(Array.isArray(v)) return v.filter(Boolean); return Object.values(v);}
+function normWa(w){w=String(w||'').replace(/[^0-9]/g,''); if(w.startsWith('0')) w='62'+w.slice(1); return w;}
+let DATA={booking:[],klien:[],keuangan:[],stok:[],artist:[],jadwal:{},passwords:{owner:'owner123',admin:'admin123',manager:'manager123',artist:'artist123'},toko:{nama:'RiseInk Tattoo',alamat:'Sanggau, Kalimantan Barat',wa:'08...'}};
+let currentRole=localStorage.getItem('riseink_role')||'', currentArtist=null, currentArtistId='', tanggalPilih='', viewYear=new Date().getFullYear(), viewMonth=new Date().getMonth();
+rootRef.on('value',snap=>{let v=snap.val()||{}; DATA.booking=toArray(v.booking); DATA.klien=toArray(v.klien); DATA.keuangan=toArray(v.keuangan); DATA.stok=toArray(v.stok); DATA.artist=toArray(v.artist); DATA.jadwal=v.jadwal||{}; if(v.passwords)DATA.passwords={owner:'owner123',admin:'admin123',manager:'manager123',artist:'artist123',...v.passwords}; if(v.toko)DATA.toko=v.toko;
+document.getElementById('syncStatus').textContent='● Tersambung - Sinkron'; document.getElementById('syncStatus').className='sync on'; document.getElementById('debug').textContent='Firebase OK - '+DATA.booking.length+' booking, '+DATA.artist.length+' artist';
+document.getElementById('pwOwner').value=DATA.passwords.owner||'owner123'; document.getElementById('pwAdmin').value=DATA.passwords.admin||'admin123'; document.getElementById('pwManager').value=DATA.passwords.manager||'manager123'; document.getElementById('pwArtist').value=DATA.passwords.artist||'artist123';
+document.getElementById('setNama').value=DATA.toko.nama||''; document.getElementById('setAlamat').value=DATA.toko.alamat||''; document.getElementById('setWa').value=DATA.toko.wa||'';
+// Update dropdown login artist
+let sel=document.getElementById('artistLoginSelect'); let cur=sel.value; sel.innerHTML='<option value="">-- Pilih Nama Artist Kamu --</option>'+DATA.artist.map(a=>`<option value="${a.id}">${a.nama} - ${a.skill||''}</option>`).join(''); if(cur) sel.value=cur;
+applyRole(); render();},e=>{document.getElementById('debug').textContent='Error: '+e.message;});
+function saveOne(k){rootRef.child(k).set(DATA[k]);}
+function fmt(n){return 'Rp '+(Number(n)||0).toLocaleString('id-ID');}
+function isUang(){return currentRole=='owner'||currentRole=='manager';}
+function applyRole(){
+  let uang=isUang();
+  document.querySelectorAll('.uang').forEach(el=>{el.style.display=uang?'':'none';});
+  document.querySelectorAll('.menu-uang').forEach(el=>{el.style.display=uang?'':'none';});
+  // Artist paling terbatas: hanya Dashboard + Kalender
+  if(currentRole=='artist'){
+    document.querySelectorAll('nav button').forEach(b=>{let p=b.getAttribute('data-page'); if(p && !['dashboard','kalender'].includes(p)) b.style.display='none';});
+    document.getElementById('formArtist').style.display='none';
+  } else {
+    document.querySelectorAll('nav button').forEach(b=>{if(b.classList.contains('menu-uang')) return; b.style.display='';});
+    if(document.getElementById('formArtist')) document.getElementById('formArtist').style.display='block';
+  }
+  // Admin tidak bisa lihat form artist komisi sudah di-handle class uang, tapi tetap bisa tambah artist
+}
+function onRoleChange(){let r=document.getElementById('role').value; document.getElementById('artistLoginBox').style.display=r=='artist'?'block':'none'; document.getElementById('pin').placeholder=r=='artist'?'Password Artist - artist123':'Password - '+r+'123';}
+function doLogin(){
+  let r=document.getElementById('role').value,p=document.getElementById('pin').value;
+  if(p!==(DATA.passwords[r]||'')){document.getElementById('loginMsg').textContent='Password salah!'; return;}
+  if(r=='artist'){
+    let id=document.getElementById('artistLoginSelect').value;
+    if(!id){document.getElementById('loginMsg').textContent='Pilih dulu nama Artist kamu!'; return;}
+    let art=DATA.artist.find(a=>String(a.id)==String(id)); if(!art){document.getElementById('loginMsg').textContent='Artist tidak ditemukan'; return;}
+    currentArtist=art; currentArtistId=art.id; localStorage.setItem('riseink_artist_id',art.id); localStorage.setItem('riseink_artist_nama',art.nama);
+  } else { currentArtist=null; currentArtistId=''; localStorage.removeItem('riseink_artist_id'); localStorage.removeItem('riseink_artist_nama'); }
+  currentRole=r; localStorage.setItem('riseink_role',r);
+  document.getElementById('login').style.display='none';
+  document.getElementById('userLabel').textContent='• '+(r=='artist'?(currentArtist?currentArtist.nama:'Artist')+' (ARTIST)':r.toUpperCase());
+  applyRole();
+  if(r=='artist') show('kalender',document.querySelector('[data-page="kalender"]'));
+  render();
+}
+function logout(){localStorage.removeItem('riseink_role'); localStorage.removeItem('riseink_artist_id'); localStorage.removeItem('riseink_artist_nama'); location.reload();}
+if(currentRole){
+  document.getElementById('login').style.display='none';
+  if(currentRole=='artist'){
+    let aid=localStorage.getItem('riseink_artist_id'); let anama=localStorage.getItem('riseink_artist_nama');
+    // currentArtist akan diisi setelah data load, sementara pakai nama
+    currentArtist={id:aid,nama:anama}; currentArtistId=aid;
+    document.getElementById('userLabel').textContent='• '+(anama||'Artist')+' (ARTIST)';
+    setTimeout(()=>show('kalender',document.querySelector('[data-page="kalender"]')),200);
+  } else {
+    document.getElementById('userLabel').textContent='• '+currentRole.toUpperCase();
+  }
+  document.getElementById('role').value=currentRole; onRoleChange();
+}
+function show(id,el){['dashboard','booking','kalender','klien','keuangan','stok','artist','laporan','pengaturan'].forEach(p=>{let e=document.getElementById('page-'+p); if(e) e.style.display=p==id?'block':'none';}); document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); applyRole(); render();}
+function geserBulan(d){viewMonth+=d; if(viewMonth<0){viewMonth=11;viewYear--;} if(viewMonth>11){viewMonth=0;viewYear++;} render();}
+function keBulanIni(){let n=new Date(); viewYear=n.getFullYear(); viewMonth=n.getMonth(); render();}
+function keBulanDepan(){let n=new Date(); n.setMonth(n.getMonth()+1); viewYear=n.getFullYear(); viewMonth=n.getMonth(); render();}
+function namaBulan(m){return ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][m];}
+document.getElementById('bHarga').addEventListener('input',updSisa); document.getElementById('bDP').addEventListener('input',updSisa);
+function updSisa(){let h=Number(document.getElementById('bHarga').value)||0,dp=Number(document.getElementById('bDP').value)||0; document.getElementById('sisaLabel').textContent=fmt(Math.max(0,h-dp));}
+document.getElementById('bLayanan').addEventListener('change',e=>{let v=e.target.value.split('|'); if(v[1]&&v[1]!='0') document.getElementById('bHarga').value=v[1]; updSisa();});
+function addBooking(){let nama=document.getElementById('bNama').value.trim(); if(!nama) return alert('Isi nama klien'); let lay=document.getElementById('bLayanan').value.split('|'); let harga=Number(document.getElementById('bHarga').value)||Number(lay[1])||0; let dp=Number(document.getElementById('bDP').value)||0; DATA.booking.unshift({id:Date.now(),nama,wa:document.getElementById('bWa').value,umur:document.getElementById('bUmur').value,layanan:lay[0],tanggal:document.getElementById('bTanggal').value,jam:document.getElementById('bJam').value,artist:document.getElementById('bArtist').value,posisi:document.getElementById('bPosisi').value,ukuran:document.getElementById('bUkuran').value,harga,dp,sisa:Math.max(0,harga-dp),status:document.getElementById('bStatus').value,bayar:document.getElementById('bBayar').value,catatan:document.getElementById('bCatatan').value,oleh:currentRole||'admin',created:new Date().toLocaleDateString('id-ID')}); saveOne('booking'); alert('Booking tersimpan & sinkron!'); document.getElementById('bNama').value=''; render();}
+function addKlien(){let n=document.getElementById('kNama').value.trim(); if(!n) return alert('Isi nama'); DATA.klien.unshift({id:Date.now(),nama:n,wa:document.getElementById('kWa').value,alamat:document.getElementById('kAlamat').value,tglLahir:document.getElementById('kTglLahir').value,catatan:document.getElementById('kCatatan').value}); saveOne('klien'); render();}
+function addKeuangan(){if(!isUang()) return alert('Hanya Owner / Manager'); let nom=Number(document.getElementById('fNominal').value); if(!nom) return alert('Isi nominal'); DATA.keuangan.unshift({id:Date.now(),jenis:document.getElementById('fJenis').value,kategori:document.getElementById('fKategori').value,ket:document.getElementById('fKet').value,nominal:nom,tgl:document.getElementById('fTanggal').value||new Date().toISOString().slice(0,10)}); saveOne('keuangan'); render();}
+function addStok(){let n=document.getElementById('sNama').value.trim(); if(!n) return alert('Isi nama'); DATA.stok.unshift({id:Date.now(),nama:n,kategori:document.getElementById('sKategori').value,jumlah:Number(document.getElementById('sJumlah').value)||0,min:Number(document.getElementById('sMin').value)||5,harga:Number(document.getElementById('sHarga').value)||0}); saveOne('stok'); render();}
+function addArtist(){let n=document.getElementById('aNama').value.trim(); if(!n) return alert('Isi nama artist'); DATA.artist.unshift({id:Date.now(),nama:n,skill:document.getElementById('aSkill').value,wa:document.getElementById('aWa').value,alamat:document.getElementById('aAlamat').value,komisi:Number(document.getElementById('aKomisi').value)||40}); saveOne('artist'); alert('Artist tersimpan! Sekarang bisa login sebagai Artist.'); render();}
+function del(col,id){if(currentRole=='admin'||currentRole=='artist') return alert('Admin / Artist tidak bisa hapus. Hanya Owner / Manager.'); if(!confirm('Hapus?'))return; DATA[col]=DATA[col].filter(x=>String(x.id)!==String(id)); saveOne(col);}
+function ubahStatus(id,st){let b=DATA.booking.find(x=>String(x.id)==String(id)); if(b){b.status=st; if(st=='Selesai') b.sisa=0; saveOne('booking');}}
+function savePw(){if(currentRole!=='owner' && currentRole!=='') return alert('Hanya Owner bisa ganti password'); DATA.passwords={owner:document.getElementById('pwOwner').value,admin:document.getElementById('pwAdmin').value,manager:document.getElementById('pwManager').value,artist:document.getElementById('pwArtist').value}; saveOne('passwords'); alert('Password tersimpan!');}
+function saveToko(){DATA.toko={nama:document.getElementById('setNama').value,alamat:document.getElementById('setAlamat').value,wa:document.getElementById('setWa').value}; saveOne('toko'); alert('Toko tersimpan!');}
+function resetAll(){if(currentRole!=='owner') return alert('Hanya Owner bisa reset'); if(!confirm('Yakin hapus SEMUA?'))return; DATA={booking:[],klien:[],keuangan:[],stok:[],artist:[],jadwal:{},passwords:DATA.passwords,toko:DATA.toko}; rootRef.set(DATA);}
+function backup(){let a=document.getElementById('backupArea'); a.style.display='block'; a.value=JSON.stringify(DATA,null,2); a.select(); alert('Backup tampil, copy ke Notes!');}
+function exportWA(){let txt='*LAPORAN RISEINK*%0AOmzet: '+encodeURIComponent(document.getElementById('statOmzet').textContent)+'%0ABooking: '+DATA.booking.length; window.open('https://wa.me/?text='+txt);}
+function exportCSV(){let csv='Nama,Tanggal,Artist,Layanan,Harga,Status\n'+DATA.booking.map(b=>[b.nama,b.tanggal,b.artist,b.layanan,b.harga,b.status].join(',')).join('\n'); let blob=new Blob([csv],{type:'text/csv'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='laporan-riseink.csv'; a.click();}
+function klikTanggal(tgl){tanggalPilih=tgl; let j=DATA.jadwal[tgl]||{}; document.getElementById('modalTanggal').style.display='flex'; document.getElementById('modalJudul').textContent='📅 '+tgl+' - '+namaBulan(viewMonth)+' '+viewYear; let isMine=false; if(currentRole=='artist' && currentArtist){ isMine = j.artist==currentArtist.nama; } let isAdmin=currentRole=='admin'||currentRole=='owner'||currentRole=='manager'; document.getElementById('modalIsi').innerHTML=j.artist?`<p>🧑‍🎨 <b>${j.artist}</b><br>💼 ${j.job||'-'}<br>🕐 ${j.jam||'-'}<br>📝 ${j.catatan||'-'}</p>`+(j.hasil?`<hr><p><b>✅ Hasil:</b> ${j.hasilJob||''}<br>${j.hasilCatatan||''}</p><img src="${j.hasilFoto||''}">`:`<p class="small">Belum ada hasil.</p>`):`<p class="small">Belum ada jadwal.</p>`; document.getElementById('formJadwalAdmin').style.display=isAdmin?'block':'none'; document.getElementById('formUploadArtist').style.display=(isMine||(currentRole=='artist'&&j.artist))?'block':'none'; document.getElementById('pilihArtist').innerHTML='<option value="">-- Pilih Artist --</option>'+DATA.artist.map(a=>`<option value="${a.wa}|${a.nama}" ${j.artist==a.nama?'selected':''}>${a.nama}</option>`).join(''); document.getElementById('jadwalJob').value=j.job||''; document.getElementById('jadwalJam').value=j.jam||''; document.getElementById('jadwalCatatan').value=j.catatan||''; document.getElementById('uploadJob').value=j.hasilJob||''; document.getElementById('uploadCatatan').value=j.hasilCatatan||'';}
+function tutupModal(){document.getElementById('modalTanggal').style.display='none';}
+function simpanJadwal(){let v=document.getElementById('pilihArtist').value; if(!v) return alert('Pilih artist dulu'); let [wa,nama]=v.split('|'); let old=DATA.jadwal[tanggalPilih]||{}; DATA.jadwal[tanggalPilih]={...old,artist:nama,artistWa:wa,job:document.getElementById('jadwalJob').value,jam:document.getElementById('jadwalJam').value,catatan:document.getElementById('jadwalCatatan').value,tanggal:tanggalPilih}; saveOne('jadwal'); alert('Jadwal tersimpan!'); tutupModal(); render();}
+function hapusJadwal(){if(!confirm('Hapus jadwal?'))return; delete DATA.jadwal[tanggalPilih]; saveOne('jadwal'); tutupModal(); render();}
+document.getElementById('uploadFoto').addEventListener('change',e=>{let f=e.target.files[0]; if(!f) return; let r=new FileReader(); r.onload=ev=>{let img=new Image(); img.onload=()=>{let c=document.createElement('canvas'); let w=img.width,h=img.height,max=800; if(w>max){h=h*max/w;w=max;} c.width=w;c.height=h; c.getContext('2d').drawImage(img,0,0,w,h); let comp=c.toDataURL('image/jpeg',0.7); document.getElementById('previewFoto').src=comp; document.getElementById('previewFoto').style.display='block'; document.getElementById('previewFoto').dataset.data=comp;}; img.src=ev.target.result;}; r.readAsDataURL(f);});
+function simpanHasil(){let j=DATA.jadwal[tanggalPilih]; if(!j) return alert('Tidak ada jadwal'); let foto=document.getElementById('previewFoto').dataset.data||j.hasilFoto||''; j.hasilJob=document.getElementById('uploadJob').value; j.hasilCatatan=document.getElementById('uploadCatatan').value; if(foto) j.hasilFoto=foto; j.hasilOleh=currentArtist?currentArtist.nama:currentRole; DATA.jadwal[tanggalPilih]=j; saveOne('jadwal'); alert('Hasil tersimpan!'); tutupModal(); render();}
+
+function render(){
+let b=DATA.booking||[],k=DATA.klien||[],f=DATA.keuangan||[],s=DATA.stok||[],ar=DATA.artist||[];
+// Sinkronkan currentArtist dari DATA setelah load
+if(currentRole=='artist' && currentArtistId){
+  let found=ar.find(a=>String(a.id)==String(currentArtistId)); if(found) currentArtist=found;
+}
+let today=new Date().toISOString().slice(0,10); let thisMonth=new Date().toISOString().slice(0,7);
+let omzet=f.filter(x=>x.jenis=='masuk').reduce((a,x)=>a+(Number(x.nominal)||0),0);
+let keluar=f.filter(x=>x.jenis=='keluar').reduce((a,x)=>a+(Number(x.nominal)||0),0);
+let omzetBulan=f.filter(x=>x.jenis=='masuk'&&(x.tgl||'').startsWith(thisMonth)).reduce((a,x)=>a+(Number(x.nominal)||0),0);
+let omzetHari=f.filter(x=>x.jenis=='masuk'&&x.tgl==today).reduce((a,x)=>a+(Number(x.nominal)||0),0);
+let omzetBookingBulan=b.filter(x=>(x.tanggal||'').startsWith(thisMonth)&&x.status!='Batal').reduce((a,x)=>a+(Number(x.harga)||0),0);
+let profit=(omzet+omzetBookingBulan)-keluar;
+document.getElementById('statBooking').textContent=b.length; document.getElementById('statOmzet').textContent=fmt(omzet+omzetBookingBulan); document.getElementById('statSaldo').textContent=fmt(omzet-keluar); document.getElementById('statHariIni').textContent=fmt(omzetHari); document.getElementById('statBulan').textContent=fmt(omzetBulan+omzetBookingBulan); document.getElementById('statKlien').textContent=k.length; document.getElementById('statProfit').textContent=fmt(profit); document.getElementById('barProfit').style.width=(profit/(omzet+omzetBookingBulan||1)*100)+'%';
+if(document.getElementById('totalMasuk')){document.getElementById('totalMasuk').textContent=fmt(omzet); document.getElementById('totalKeluar').textContent=fmt(keluar); document.getElementById('saldoLabel').textContent=fmt(omzet-keluar); document.getElementById('barKeuangan').style.width=(omzet/(omzet+keluar||1)*100)+'%';}
+document.getElementById('bArtist').innerHTML='<option value="">-- Pilih Artist --</option>'+ar.map(a=>`<option value="${a.nama}">${a.nama} - ${a.skill||''}</option>`).join('');
+let uang=isUang();
+let hariIni=b.filter(x=>x.tanggal==today); if(currentRole=='artist' && currentArtist) hariIni=hariIni.filter(x=>x.artist==currentArtist.nama);
+document.getElementById('listToday').innerHTML=hariIni.map(x=>`<div class="item">👤 <b>${x.nama}</b> - ${x.layanan} - ${x.jam} - Artist: ${x.artist||'-'} - <span class="badge ${x.status=='Selesai'?'selesai':x.status=='Batal'?'batal':''}">${x.status}</span> ${uang?`- ${fmt(x.harga)}`:''}</div>`).join('')||'Tidak ada jadwal hari ini';
+document.getElementById('listStokAlert').innerHTML=s.filter(x=>x.jumlah<=(x.min||5)).map(x=>`<div class="item">⚠️ <b>${x.nama}</b> - Sisa ${x.jumlah} (Min ${x.min||5})</div>`).join('')||'✅ Semua stok aman';
+document.getElementById('listTransaksi').innerHTML=f.slice(0,5).map(x=>`<div class="item">${x.jenis=='masuk'?'🟢':'🔴'} ${x.ket} - <b>${fmt(x.nominal)}</b> <small>${x.tgl}</small></div>`).join('')||'Belum ada transaksi';
+let cnt={}; b.forEach(x=>{if(x.artist&&x.status!='Batal') cnt[x.artist]=(cnt[x.artist]||0)+1;});
+document.getElementById('listTopArtist').innerHTML=Object.entries(cnt).sort((a,b2)=>b2[1]-a[1]).slice(0,3).map(([n,c])=>`<div class="item">🏆 <b>${n}</b> - ${c} job</div>`).join('')||'Belum ada job';
+let search=(document.getElementById('searchBooking')?.value||'').toLowerCase(); let fs=document.getElementById('filterStatus')?.value||'';
+let fb=b.filter(x=>((x.nama||'')+' '+(x.artist||'')).toLowerCase().includes(search)&&(!fs||x.status==fs));
+if(currentRole=='artist' && currentArtist) fb=fb.filter(x=>x.artist==currentArtist.nama);
+document.getElementById('listBooking').innerHTML=fb.map(x=>`<div class="item"><b>${x.nama}</b> (${x.wa||'-'})<br><small>${x.layanan} • ${x.tanggal} ${x.jam} • Artist: ${x.artist||'-'} • Posisi: ${x.posisi||'-'}<br>${uang?`Harga ${fmt(x.harga)} • DP ${fmt(x.dp)} • Sisa ${fmt(x.sisa)} • `:''}Bayar: ${x.bayar}<br>${x.catatan||''}</small><br><span class="badge ${x.status=='Selesai'?'selesai':x.status=='Batal'?'batal':x.status=='DP Masuk'?'dp':''}">${x.status}</span> <button class="btn2" onclick="ubahStatus(${x.id},'Selesai')">✅ Selesai</button> <button class="btn2" onclick="ubahStatus(${x.id},'Batal')">❌ Batal</button> ${(currentRole=='owner'||currentRole=='manager')?`<button class="del" onclick="del('booking',${x.id})">Hapus</button>`:''}</div>`).join('')||'Tidak ada booking';
+let sk=(document.getElementById('searchKlien')?.value||'').toLowerCase();
+document.getElementById('listKlien').innerHTML=k.filter(x=>(x.nama||'').toLowerCase().includes(sk)).map(x=>{let hist=b.filter(y=>y.nama==x.nama); return `<div class="item"><b>${x.nama}</b> - ${x.wa||''} - ${x.alamat||''}<br><small>Lahir: ${x.tglLahir||'-'} • ${x.catatan||''}<br>Riwayat: ${hist.length} kali ${uang?`- Total ${fmt(hist.reduce((a,y)=>a+(Number(y.harga)||0),0))}`:''}<br>${hist.map(h=>h.layanan+' ('+h.tanggal+')').join(', ')||'Belum pernah'}</small> ${(currentRole=='owner'||currentRole=='manager')?`<button class="del" onclick="del('klien',${x.id})">Hapus</button>`:''}</div>`;}).join('')||'Belum ada klien';
+document.getElementById('listKeuangan').innerHTML=f.map(x=>`<div class="item">${x.jenis=='masuk'?'🟢':'🔴'} ${x.ket} - <b>${fmt(x.nominal)}</b> <small>${x.tgl}</small> ${(currentRole=='owner'||currentRole=='manager')?`<button class="del" onclick="del('keuangan',${x.id})">Hapus</button>`:''}</div>`).join('')||'Belum ada';
+document.getElementById('listStok').innerHTML=s.map(x=>`<div class="item"><b>${x.nama}</b> - ${x.kategori} - Stok: <b>${x.jumlah}</b> ${x.jumlah<=(x.min||5)?'⚠️ MENIPIS':''} ${uang?`- Harga ${fmt(x.harga)}`:''} ${(currentRole=='owner'||currentRole=='manager')?`<button class="del" onclick="del('stok',${x.id})">Hapus</button>`:''}</div>`).join('')||'Belum ada stok';
+document.getElementById('listArtist').innerHTML=ar.map(a=>{let jobs=b.filter(x=>x.artist==a.nama); let total=jobs.reduce((s,y)=>s+(Number(y.harga)||0),0); return `<div class="item"><b>${a.nama}</b> - ${a.skill||''} - WA ${a.wa||''}<br><small>Job: ${jobs.length} ${uang?`• Omzet: ${fmt(total)} • Gaji Komisi ${a.komisi}% = ${fmt(total*a.komisi/100)}`:''}</small> ${(currentRole=='owner'||currentRole=='manager')?`<button class="del" onclick="del('artist',${a.id})">Hapus</button>`:''}</div>`;}).join('')||'Belum ada artist';
+document.getElementById('judulBulan').textContent=namaBulan(viewMonth)+' '+viewYear;
+let first=new Date(viewYear,viewMonth,1); let startDay=(first.getDay()+6)%7; let daysInMonth=new Date(viewYear,viewMonth+1,0).getDate(); let html='';
+for(let i=0;i<startDay;i++) html+='<div class="day" style="opacity:.2"></div>';
+let todayStr=new Date().toISOString().slice(0,10);
+for(let d=1;d<=daysInMonth;d++){let tgl=viewYear+'-'+String(viewMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'); let j=DATA.jadwal[tgl]; let isMine=j && currentArtist && j.artist==currentArtist.nama; html+=`<div class="day ${tgl==todayStr?'today':''} ${isMine?'mine':''}" onclick="klikTanggal('${tgl}')"><div class="num">${d} ${isMine?'🟢':''}</div>${j?`<div class="artist">${j.artist}</div><div class="job">${j.job||''} ${j.jam?'<br>'+j.jam:''}</div>${j.hasilFoto?`<img src="${j.hasilFoto}">`:''}${j.hasilJob?`<div class="job">✅ ${j.hasilJob}</div>`:''}`:`<div class="job" style="color:#555">- Libur -</div>`}</div>`;}
+document.getElementById('kalenderGrid').innerHTML=html;
+let prefix=viewYear+'-'+String(viewMonth+1).padStart(2,'0'); let list=Object.values(DATA.jadwal).filter(x=>x.tanggal&&x.tanggal.startsWith(prefix));
+document.getElementById('infoBulan').textContent=list.length+' hari ada jadwal • '+list.filter(x=>x.hasilFoto).length+' sudah upload hasil';
+document.getElementById('rekapBulan').innerHTML=list.sort((a,b)=>a.tanggal.localeCompare(b.tanggal)).map(x=>`<div style="padding:8px 0;border-bottom:1px solid #2a2a2a"><b>${x.tanggal}</b> - ${x.artist} - ${x.job||'-'} - ${x.hasilJob?'✅ '+x.hasilJob:'⏳ Belum upload'} ${x.hasilFoto?`<br><img src="${x.hasilFoto}" style="width:80px;height:80px;object-fit:cover;border-radius:8px">`:''}</div>`).join('')||'Belum ada jadwal bulan ini';
+document.getElementById('laporanIsi').innerHTML=`<p>Total Booking: <b>${b.length}</b> | Selesai: <b>${b.filter(x=>x.status=='Selesai').length}</b> | Batal: <b>${b.filter(x=>x.status=='Batal').length}</b><br>Total Omzet: <b>${fmt(b.filter(x=>x.status!='Batal').reduce((a,x)=>a+(Number(x.harga)||0),0))}</b><br>Total DP: <b>${fmt(b.reduce((a,x)=>a+(Number(x.dp)||0),0))}</b><br>Sisa Piutang: <b>${fmt(b.reduce((a,x)=>a+(Number(x.sisa)||0),0))}</b><br>Profit: <b>${fmt(profit)}</b></p>`;
+let byMonth={}; b.forEach(x=>{let m=(x.tanggal||'').slice(0,7); if(m) byMonth[m]=(byMonth[m]||0)+1;});
+document.getElementById('laporanBulan').innerHTML=Object.entries(byMonth).map(([m,c])=>`<div class="item">${m} - ${c} booking</div>`).join('')||'Belum ada data';
+if(!document.getElementById('bTanggal').value) document.getElementById('bTanggal').value=today;
+if(!document.getElementById('fTanggal').value) document.getElementById('fTanggal').value=today;
+applyRole();
+}
+render();
+</script>
+</body>
+</html>
